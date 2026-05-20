@@ -169,10 +169,10 @@ def inject_globals():
         "config": config,
         "current_year": datetime.now().year,
         "nav_links": [
-            ("Home", "/"),
-            ("Projects", "/projects/"),
-            ("Blog", "/blog/"),
-            ("About", "/about/"),
+            ("Home", "index"),
+            ("Projects", "projects"),
+            ("Blog", "blog"),
+            ("About", "about"),
         ],
     }
 

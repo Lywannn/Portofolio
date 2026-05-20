@@ -17,3 +17,5 @@ static/data/github_cache.json
 .DS_Store
 Thumbs.db
 *.log
+
+.claude/

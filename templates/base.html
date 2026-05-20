@@ -37,9 +37,9 @@
         {{ config.FULL_NAME.split()[0] }}<span class="accent">.</span>
       </a>
       <ul class="nav-links">
-        {% for label, path in nav_links %}
+        {% for label, endpoint in nav_links %}
         <li>
-          <a href="{{ path }}" class="nav-link {% if request.path == path %}active{% endif %}">
+          <a href="{{ url_for(endpoint) }}" class="nav-link {% if request.endpoint == endpoint %}active{% endif %}">
             {{ label }}
           </a>
         </li>
@@ -57,8 +57,8 @@
     </div>
     <!-- Mobile menu -->
     <div class="mobile-menu" id="mobileMenu">
-      {% for label, path in nav_links %}
-      <a href="{{ path }}" class="mobile-link">{{ label }}</a>
+      {% for label, endpoint in nav_links %}
+      <a href="{{ url_for(endpoint) }}" class="mobile-link">{{ label }}</a>
       {% endfor %}
     </div>
   </nav>
