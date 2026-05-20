@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Designing an Enterprise Network with OSPF: Lessons from the Field · Fadly Kurniawan</title>
+  <meta name="description" content="" />
+  <meta name="author" content="Fadly Kurniawan" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Fadly Kurniawan" />
+  <meta property="og:description" content="Fadly Kurniawan — Network Engineer &amp; Developer based in Bandung." />
+  <meta property="og:url" content="https://Lywannn.github.io/Portofolio" />
+  <meta name="twitter:card" content="summary" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
+    rel="stylesheet" />
+
+  <link rel="stylesheet" href="../../static/css/main.css" />
+  
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+</head>
+
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-inner container">
+      <a href="../../index.html" class="nav-logo">
+        Fadly<span class="accent">.</span>
+      </a>
+      <ul class="nav-links">
+        
+        <li>
+          <a href="/" class="nav-link ">
+            Home
+          </a>
+        </li>
+        
+        <li>
+          <a href="/projects/" class="nav-link ">
+            Projects
+          </a>
+        </li>
+        
+        <li>
+          <a href="/blog/" class="nav-link ">
+            Blog
+          </a>
+        </li>
+        
+        <li>
+          <a href="/about/" class="nav-link ">
+            About
+          </a>
+        </li>
+        
+      </ul>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle dark/light mode">
+          <span class="theme-icon sun">☀</span>
+          <span class="theme-icon moon">☽</span>
+        </button>
+        <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+    <!-- Mobile menu -->
+    <div class="mobile-menu" id="mobileMenu">
+      
+      <a href="/" class="mobile-link">Home</a>
+      
+      <a href="/projects/" class="mobile-link">Projects</a>
+      
+      <a href="/blog/" class="mobile-link">Blog</a>
+      
+      <a href="/about/" class="mobile-link">About</a>
+      
+    </div>
+  </nav>
+
+  <main class="main-content">
+    
+<article class="post-page">
+  <header class="post-header">
+    <div class="container post-header-inner">
+      <a href="../index.html" class="back-link">← All Posts</a>
+      <div class="blog-meta reveal">
+        <time datetime="2025-03-05">2025-03-05</time>
+        <span>·</span>
+        <span>3 min read</span>
+      </div>
+      <h1 class="post-title reveal">Designing an Enterprise Network with OSPF: Lessons from the Field</h1>
+      <div class="blog-tags reveal">
+        
+        <span class="tag">Networking</span>
+        
+        <span class="tag">OSPF</span>
+        
+        <span class="tag">Infrastructure</span>
+        
+        <span class="tag">Cisco</span>
+        
+        <span class="tag">MikroTik</span>
+        
+      </div>
+    </div>
+    
+  </header>
+
+  <div class="container post-layout">
+    
+    <aside class="post-toc">
+      <h4 class="toc-title">Contents</h4>
+      <ul>
+  <li><a href="#context">Context</a></li>
+  <li><a href="#the-design-three-layer-hierarchy">The Design: Three-Layer Hierarchy</a></li>
+  <li><a href="#vlan-segmentation">VLAN Segmentation</a></li>
+  <li><a href="#ospf-configuration">OSPF Configuration</a>
+  <ul>
+    <li><a href="#core-router-mikrotik-ospf-setup">Core Router (MikroTik) OSPF Setup</a></li>
+    <li><a href="#verification">Verification</a></li>
+  </ul></li>
+  <li><a href="#the-mistake-that-taught-me-the-most">The Mistake That Taught Me The Most</a></li>
+  <li><a href="#redundancy">Redundancy</a></li>
+  <li><a href="#results-after-6-months">Results After 6 Months</a></li>
+  <li><a href="#key-decisions-id-repeat">Key Decisions I'd Repeat</a></li>
+</ul>
+
+    </aside>
+    
+
+    <div class="post-body prose">
+      <h2 id="context">Context</h2>
+
+<p>When the company's network needed to support multiple office floors, a data center room, and eventual remote branches — the flat single-VLAN network we had wasn't going to cut it.</p>
+
+<p>I was tasked with designing and implementing a proper enterprise network architecture from scratch.</p>
+
+<h2 id="the-design-three-layer-hierarchy">The Design: Three-Layer Hierarchy</h2>
+
+<p>The classic Cisco three-layer model made sense for our scale:</p>
+
+<pre><code>┌─────────────────────────────────────────────┐
+│              CORE LAYER                      │
+│    (High-speed backbone, no endpoints)       │
+│         Core Switch 1 ←→ Core Switch 2       │
+└──────────────┬──────────────────┬────────────┘
+               │                  │
+    ┌──────────▼──────┐  ┌────────▼──────────┐
+    │ DISTRIBUTION    │  │  DISTRIBUTION     │
+    │ (Routing, ACL)  │  │  (Routing, ACL)   │
+    │  Dist Switch A  │  │   Dist Switch B   │
+    └──────┬──────────┘  └──────────┬────────┘
+           │                        │
+   ┌───────▼───────┐        ┌───────▼──────┐
+   │ ACCESS LAYER  │        │ ACCESS LAYER │
+   │ (End devices) │  ...   │ (End devices)│
+   │  Floor 1-3    │        │  Floor 4-6   │
+   └───────────────┘        └──────────────┘
+</code></pre>
+
+<p><strong>Why three layers?</strong>
+- <strong>Scalability</strong> — add new access switches without touching the core
+- <strong>Fault isolation</strong> — a failed access switch only affects that floor
+- <strong>Security</strong> — enforce policies at distribution, not everywhere</p>
+
+<h2 id="vlan-segmentation">VLAN Segmentation</h2>
+
+<p>Each department got its own VLAN:</p>
+
+<table>
+<thead>
+<tr>
+  <th>VLAN ID</th>
+  <th>Name</th>
+  <th>Subnet</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>10</td>
+  <td>Management</td>
+  <td>10.0.10.0/24</td>
+</tr>
+<tr>
+  <td>20</td>
+  <td>Engineering</td>
+  <td>10.0.20.0/24</td>
+</tr>
+<tr>
+  <td>30</td>
+  <td>Finance</td>
+  <td>10.0.30.0/24</td>
+</tr>
+<tr>
+  <td>40</td>
+  <td>Operations</td>
+  <td>10.0.40.0/24</td>
+</tr>
+<tr>
+  <td>50</td>
+  <td>WiFi-Corporate</td>
+  <td>10.0.50.0/24</td>
+</tr>
+<tr>
+  <td>99</td>
+  <td>Guest-WiFi</td>
+  <td>10.0.99.0/24</td>
+</tr>
+<tr>
+  <td>100</td>
+  <td>Servers</td>
+  <td>10.0.100.0/24</td>
+</tr>
+</tbody>
+</table>
+
+<p>Critical isolation: Finance (VLAN 30) can't directly reach any other VLAN — all traffic goes through the firewall first.</p>
+
+<h2 id="ospf-configuration">OSPF Configuration</h2>
+
+<p>Static routes don't scale. OSPF lets routers discover each other dynamically and adapt to failures automatically.</p>
+
+<h3 id="core-router-mikrotik-ospf-setup">Core Router (MikroTik) OSPF Setup</h3>
+
+<pre><code># Enable OSPF instance
+/routing ospf instance
+add name=main router-id=10.0.0.1
+
+# Define OSPF area
+/routing ospf area
+add instance=main name=backbone area-id=0.0.0.0
+
+# Advertise directly connected networks
+/routing ospf interface-template
+add area=backbone interfaces=ether1 type=ptp
+add area=backbone interfaces=ether2 type=ptp
+add area=backbone interfaces=loopback0 passive
+</code></pre>
+
+<h3 id="verification">Verification</h3>
+
+<div class="codehilite">
+<pre><span></span><code><span class="c1"># Check OSPF neighbors</span>
+/routing<span class="w"> </span>ospf<span class="w"> </span>neighbor<span class="w"> </span>print
+
+<span class="c1"># Expected output:</span>
+<span class="c1"># router-id=10.0.0.2  state=Full  ...</span>
+<span class="c1"># router-id=10.0.0.3  state=Full  ...</span>
+
+<span class="c1"># Check learned routes</span>
+/ip<span class="w"> </span>route<span class="w"> </span>print<span class="w"> </span>where<span class="w"> </span>dynamic
+</code></pre>
+</div>
+
+<h2 id="the-mistake-that-taught-me-the-most">The Mistake That Taught Me The Most</h2>
+
+<p>During initial deployment, OSPF neighbors formed but routes weren't propagating correctly between distribution switches.</p>
+
+<p><strong>Root cause:</strong> OSPF hello/dead timer mismatch.</p>
+
+<p>One device was running with hello=10s/dead=40s (default), another had been manually set to hello=30s/dead=120s from a previous config. OSPF neighbors won't form if timers don't match.</p>
+
+<p><strong>Fix:</strong></p>
+
+<pre><code>/routing ospf interface-template
+set [find] hello-interval=10 dead-interval=40
+</code></pre>
+
+<p><strong>Lesson:</strong> Always verify timers explicitly. Don't assume defaults.</p>
+
+<h2 id="redundancy">Redundancy</h2>
+
+<p>The core layer runs in an active-active setup with ECMP (Equal-Cost Multi-Path):</p>
+
+<ul>
+<li>Traffic load-balances across both core switches</li>
+<li>If one fails, all traffic moves to the other within OSPF dead interval (~40 seconds)</li>
+<li>Distribution switches have uplinks to BOTH core switches</li>
+</ul>
+
+<p>OSPF handles failover automatically — no manual intervention needed.</p>
+
+<h2 id="results-after-6-months">Results After 6 Months</h2>
+
+<ul>
+<li><strong>Zero unplanned outages</strong> caused by routing failures</li>
+<li><strong>Sub-60 second failover</strong> when testing core switch failure</li>
+<li><strong>Network team productivity up</strong> — automated monitoring catches issues before users notice</li>
+<li><strong>Security posture improved</strong> — VLAN isolation prevents lateral movement</li>
+</ul>
+
+<h2 id="key-decisions-id-repeat">Key Decisions I'd Repeat</h2>
+
+<ol>
+<li><strong>Loopback interfaces for router IDs</strong> — stable, never goes down</li>
+<li><strong>Document everything in GNS3 first</strong> — test the design virtually before touching production</li>
+<li><strong>Passive interfaces on access ports</strong> — prevent rogue OSPF neighbors</li>
+<li><strong>Gradual rollout by floor</strong> — detect issues early before full deployment</li>
+</ol>
+
+<p>Network design is 30% technical knowledge and 70% patience and documentation. The network that's easiest to troubleshoot is the one that's most consistently documented.</p>
+
+    </div>
+  </div>
+
+  <footer class="post-footer">
+    <div class="container">
+      <div class="share-row">
+        <span>Share this post</span>
+        <button class="btn btn-ghost btn-sm" id="copyLink">Copy link</button>
+      </div>
+    </div>
+  </footer>
+</article>
+
+
+<section class="section">
+  <div class="container">
+    <h2 class="section-title">Related Posts</h2>
+    <div class="blog-grid">
+      
+      <a href="../network-monitoring-grafana-influxdb/index.html" class="blog-card reveal">
+        <div class="blog-meta">
+          <time>May 10, 2025</time>
+          <span>·</span><span>2 min read</span>
+        </div>
+        <h3 class="blog-title">Building a Real-Time Network Monitoring Dashboard with Grafana &amp; InfluxDB</h3>
+        <p class="blog-excerpt">How I built a real-time dashboard to monitor 50+ network devices — tracking bandwidth, latency, and uptime — using Python, InfluxDB, and Grafana.</p>
+        <div class="blog-tags">
+          <span class="tag">Networking</span><span class="tag">Grafana</span><span class="tag">Python</span>
+        </div>
+      </a>
+      
+      <a href="../mikrotik-python-automation/index.html" class="blog-card reveal">
+        <div class="blog-meta">
+          <time>April 20, 2025</time>
+          <span>·</span><span>3 min read</span>
+        </div>
+        <h3 class="blog-title">Automating MikroTik Network Configuration with Python</h3>
+        <p class="blog-excerpt">Manual network configuration is error-prone and slow. Here&#39;s how I automated VLAN provisioning, bulk config deployment, and inventory management using Python and the MikroTik RouterOS API.</p>
+        <div class="blog-tags">
+          <span class="tag">Networking</span><span class="tag">Python</span><span class="tag">MikroTik</span>
+        </div>
+      </a>
+      
+    </div>
+  </div>
+</section>
+
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <p class="footer-copy">
+          © 2026 Fadly Kurniawan. Built on Earth by Lywannn with &amp; ❤
+        </p>
+        <div class="footer-links">
+          <a href="https://github.com/Lywannn" target="_blank" rel="noopener" aria-label="GitHub">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57v-2c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.64 1.66.24 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.8 5.63-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .31.21.69.82.57A12 12 0 0 0 12 .3" />
+            </svg>
+          </a>
+          
+          <a href="https://www.linkedin.com/in/fadly-kurniawan-s-tr-t-4a406925b/" target="_blank" rel="noopener" aria-label="LinkedIn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+            </svg>
+          </a>
+          
+          
+          <a href="https://x.com/FadlyKurni71831" target="_blank" rel="noopener" aria-label="Twitter">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
+          </a>
+          
+          <a href="mailto:fadlykurniawanrpl@gmail.com" aria-label="Email">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Back to top -->
+  <button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
+
+  <script src="../../static/js/theme.js"></script>
+  <script src="../../static/js/main.js"></script>
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script>
+document.getElementById('copyLink')?.addEventListener('click', () => {
+  navigator.clipboard.writeText(window.location.href);
+  const btn = document.getElementById('copyLink');
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy link', 2000);
+});
+</script>
+
+</body>
+
+</html>
