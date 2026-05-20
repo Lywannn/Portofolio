@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *"  # setiap hari jam 02:00 UTC (09:00 WIB)
 
 permissions:
   contents: write
