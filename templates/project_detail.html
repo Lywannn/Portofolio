@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}{{ repo.name }} · {{ config.FULL_NAME }}{% endblock %}
+{% block description %}{{ repo.description or repo.name }}{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div class="container">
+    <a href="{{ url_for('projects') }}" class="back-link">← All Projects</a>
+    <h1 class="page-title reveal">{{ repo.name }}</h1>
+    {% if repo.description %}
+    <p class="page-subtitle reveal">{{ repo.description }}</p>
+    {% endif %}
+    <div class="detail-actions reveal">
+      <a href="{{ repo.html_url }}" target="_blank" rel="noopener" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57v-2c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.64 1.66.24 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.8 5.63-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .31.21.69.82.57A12 12 0 0 0 12 .3"/></svg>
+        View on GitHub
+      </a>
+      {% if repo.homepage %}
+      <a href="{{ repo.homepage }}" target="_blank" rel="noopener" class="btn btn-ghost">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Live Demo
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container detail-layout">
+    <!-- Main: README -->
+    <div class="detail-main">
+      {% if readme_html %}
+      <div class="readme-body prose">
+        {{ readme_html | safe }}
+      </div>
+      {% else %}
+      <div class="empty-readme">
+        <p>No README found for this repository.</p>
+        <a href="{{ repo.html_url }}" target="_blank" rel="noopener" class="btn btn-ghost">View on GitHub →</a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Sidebar: Stats -->
+    <aside class="detail-sidebar">
+      <div class="sidebar-card">
+        <h3 class="sidebar-title">Stats</h3>
+        <ul class="sidebar-stats">
+          <li><span>⭐ Stars</span><strong>{{ repo.stargazers_count }}</strong></li>
+          <li><span>🍴 Forks</span><strong>{{ repo.forks_count }}</strong></li>
+          <li><span>👁 Watchers</span><strong>{{ repo.watchers_count }}</strong></li>
+          <li><span>🐛 Issues</span><strong>{{ repo.open_issues_count }}</strong></li>
+        </ul>
+      </div>
+
+      {% if repo.language %}
+      <div class="sidebar-card">
+        <h3 class="sidebar-title">Language</h3>
+        <span class="lang-badge" data-lang="{{ repo.language }}">
+          <span class="lang-dot"></span>{{ repo.language }}
+        </span>
+      </div>
+      {% endif %}
+
+      {% if repo.topics %}
+      <div class="sidebar-card">
+        <h3 class="sidebar-title">Topics</h3>
+        <div class="topic-tags">
+          {% for topic in repo.topics %}
+          <span class="tag">{{ topic }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="sidebar-card">
+        <h3 class="sidebar-title">Info</h3>
+        <ul class="sidebar-info">
+          {% if repo.license %}
+          <li><span>License</span><strong>{{ repo.license.spdx_id }}</strong></li>
+          {% endif %}
+          <li><span>Updated</span><strong>{{ repo.updated_at[:10] }}</strong></li>
+          <li><span>Created</span><strong>{{ repo.created_at[:10] }}</strong></li>
+          {% if repo.size %}
+          <li><span>Size</span><strong>{{ (repo.size / 1024) | round(1) }} MB</strong></li>
+          {% endif %}
+        </ul>
+      </div>
+    </aside>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+{% endblock %}

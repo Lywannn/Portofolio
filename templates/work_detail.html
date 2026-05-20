@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}{{ project.title }} · {{ config.FULL_NAME }}{% endblock %}
+{% block description %}{{ project.desc }}{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div class="container">
+    <a href="{{ url_for('projects') }}" class="back-link">← All Projects</a>
+    <div class="work-category-badge reveal">{{ project.category }}</div>
+    <h1 class="page-title reveal">{{ project.title }}</h1>
+    <p class="page-subtitle reveal">{{ project.desc }}</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container detail-layout">
+    <div class="detail-main">
+      <!-- Highlights -->
+      <div class="work-section reveal">
+        <h2 class="work-section-title">Key Achievements</h2>
+        <ul class="work-highlights">
+          {% for item in project.highlights %}
+          <li>
+            <span class="highlight-check">✓</span>
+            {{ item }}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- Screenshot placeholder -->
+      {% if project.image %}
+      <div class="work-section reveal">
+        <h2 class="work-section-title">Preview</h2>
+        <div class="work-image">
+          <img src="{{ url_for('static', filename=project.image) }}" alt="{{ project.title }}" loading="lazy" />
+        </div>
+      </div>
+      {% else %}
+      <div class="work-section reveal">
+        <div class="image-placeholder">
+          <p>Screenshot / demo image coming soon</p>
+          <small>Edit <code>config.py</code> → <code>WORK_PROJECTS</code> → tambahkan path gambar di field <code>image</code></small>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="detail-sidebar">
+      <div class="sidebar-card">
+        <h3 class="sidebar-title">Project Info</h3>
+        <ul class="sidebar-info">
+          <li><span>Role</span><strong>{{ project.role }}</strong></li>
+          <li><span>Period</span><strong>{{ project.period }}</strong></li>
+          <li><span>Category</span><strong>{{ project.category }}</strong></li>
+          <li><span>Type</span><strong>Professional Work</strong></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-card">
+        <h3 class="sidebar-title">Tools & Technologies</h3>
+        <div class="topic-tags">
+          {% for tool in project.tools %}
+          <span class="tag">{{ tool }}</span>
+          {% endfor %}
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+{% endblock %}
